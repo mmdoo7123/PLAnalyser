@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { auth } from "../../firebase";  
+import { auth, createUserWithEmailAndPassword, signInWithEmailAndPassword } from "../firebase/firebase";
 
 export default function UploadPage() {
   const [user, setUser] = useState(null);
