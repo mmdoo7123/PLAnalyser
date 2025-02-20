@@ -1,5 +1,6 @@
 import { initializeApp } from "firebase/app";
-import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword } from "firebase/auth";
+import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, GoogleAuthProvider } from "firebase/auth";
+import { getFirestore } from "firebase/firestore"; // Import Firestore
 
 // Ensure environment variables are loaded
 const firebaseConfig = {
@@ -11,12 +12,17 @@ const firebaseConfig = {
   appId: process.env.NEXT_PUBLIC_FIREBASE_APP_ID,
   measurementId: process.env.NEXT_PUBLIC_FIREBASE_MEASUREMENT_ID,
 };
+
 // Ensure environment variables are loaded
 if (!firebaseConfig.apiKey) {
   throw new Error("Missing Firebase API Key! Check .env.local");
 }
+
 // Initialize Firebase
 const app = initializeApp(firebaseConfig);
 const auth = getAuth(app);
+const googleAuthProvider = new GoogleAuthProvider(); // Initialize Google Auth Provider
+const db = getFirestore(app); // Initialize Firestore
 
-export { app, auth, createUserWithEmailAndPassword, signInWithEmailAndPassword };
+// Export everything
+export { app, auth, createUserWithEmailAndPassword, signInWithEmailAndPassword, googleAuthProvider, db };

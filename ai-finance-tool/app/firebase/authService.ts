@@ -2,17 +2,23 @@ import {
   createUserWithEmailAndPassword,
   signInWithEmailAndPassword,
   sendEmailVerification,
+  signInWithPopup,
+  GoogleAuthProvider,
   UserCredential,
   AuthError,
   Auth,
+  signInWithRedirect,
 } from "firebase/auth";
 import { auth } from "./firebase";
+import { FirebaseError } from "firebase/app";
 
 class AuthService {
   private auth: Auth;
+  private googleProvider: GoogleAuthProvider;
 
   constructor(auth: Auth) {
     this.auth = auth;
+    this.googleProvider = new GoogleAuthProvider(); // Initialize Google provider
   }
 
   // Register a new user
@@ -117,8 +123,34 @@ class AuthService {
     }
   }
 
-  // Handle Firebase authentication errors
-  private handleError(error: AuthError): void {
+  
+  
+  // Google Sign-In
+  async signInWithGoogle(): Promise<void> {
+    try {
+      // 1. Sign in with Google using a popup
+      const userCredential = await signInWithPopup(this.auth, this.googleProvider);
+
+      // 2. Get Firebase ID token
+      const idToken = await userCredential.user.getIdToken();
+
+      // 3. Save user data to backend (FastAPI)
+      await this.saveUserToBackend(idToken, userCredential.user.displayName || "Google User");
+
+      // 4. Optionally, fetch user data from backend
+      await this.fetchUserData();
+
+      alert(`Welcome, ${userCredential.user.displayName || "User"}!`);
+    } catch (error) {
+      if (error instanceof FirebaseError && error.code === "auth/popup-blocked") {
+        await signInWithRedirect(this.auth, this.googleProvider);
+        return;
+      }
+      this.handleError(error as AuthError);
+    }
+  }
+   // Keep handleError private
+   private handleError(error: AuthError): void {
     let errorMessage = "An error occurred. Please try again.";
     switch (error.code) {
       case "auth/email-already-in-use":
@@ -135,6 +167,12 @@ class AuthService {
         break;
       case "auth/wrong-password":
         errorMessage = "Incorrect password.";
+        break;
+      case "auth/popup-blocked":
+        errorMessage = "Popup blocked by the browser. Please allow popups and try again.";
+        break;
+      case "auth/popup-closed-by-user":
+        errorMessage = "Popup closed by the user. Please try again.";
         break;
     }
     alert(errorMessage);
